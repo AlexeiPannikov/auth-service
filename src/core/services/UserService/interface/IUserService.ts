@@ -14,6 +14,8 @@ export interface IUserService {
         user: User;
         tokens: { accessToken: string; refreshToken: string };
     }>
+
+    logOut(refreshToken: string): Promise<void>
 }
 
 export const IUserService = Symbol('IUserService');

@@ -4,7 +4,7 @@ import {
     Get,
     Inject,
     Param,
-    Post,
+    Post, Req,
     Res,
     UseInterceptors,
     UsePipes,
@@ -12,7 +12,7 @@ import {
 } from '@nestjs/common';
 import {SignUpRequestDto} from './dto/SignUpRequest.dto';
 import {IUserService} from '../../../../core/services/UserService/interface/IUserService';
-import {Response} from 'express';
+import {Request, Response} from 'express';
 import {ResponseInterceptor} from '../../../interceptors/ResponseInterceptor';
 import * as process from 'process';
 import {SignInRequestDto} from "./dto/SignInRequest.dto";
@@ -72,6 +72,20 @@ export class AuthHttpController {
             });
             delete data.user.password
             return data;
+        } catch (e) {
+            console.log(e);
+            return e;
+        }
+    }
+
+    @Get('log-out')
+    async logOut(
+        @Req() request: Request,
+    ) {
+        try {
+            const {refreshToken} = request.cookies
+            await this.userService.logOut(refreshToken);
+            request.cookies.clearCookie("refreshToken")
         } catch (e) {
             console.log(e);
             return e;

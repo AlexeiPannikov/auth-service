@@ -5,9 +5,9 @@ import {v4} from 'uuid';
 import {IUserService} from './interface/IUserService';
 import {ITokenService} from '../TokenService/interface/ITokenService';
 import {IActivationService} from '../ActivationServices/interfaces/IActivationService';
-import * as process from 'process';
 import {SignUpDto} from "./dto/SignUp.dto";
 import {SignInDto} from './dto/SignIn.dto';
+import * as process from "process";
 
 @Injectable()
 export class UserService implements IUserService {
@@ -37,7 +37,6 @@ export class UserService implements IUserService {
             )
         }
         const tokens = this.tokenService.generateTokens({id: user.id});
-        console.log(tokens)
         await this.tokenService.saveRefreshToken({
             userId: user.id,
             refreshToken: tokens.refreshToken,
@@ -88,5 +87,9 @@ export class UserService implements IUserService {
         }
         user.isActivated = true;
         return await this.userRepository.updateUser(user);
+    }
+
+    async logOut(refreshToken: string): Promise<void> {
+        await this.tokenService.removeToken(refreshToken)
     }
 }
