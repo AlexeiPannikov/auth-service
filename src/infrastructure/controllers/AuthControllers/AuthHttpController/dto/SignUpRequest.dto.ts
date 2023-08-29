@@ -1,5 +1,5 @@
 import { IsEmail, IsNotEmpty, IsString } from 'class-validator';
-import { SignUpDto } from '../../../../../core/services/UserService/dto/SignUpDto';
+import {SignUpDto} from "../../../../../core/services/UserService/dto/SignUp.dto";
 
 export class SignUpRequestDto implements SignUpDto {
   @IsNotEmpty()

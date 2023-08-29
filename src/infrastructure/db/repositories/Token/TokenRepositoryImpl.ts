@@ -13,7 +13,9 @@ export class TokenRepositoryImpl implements ITokenRepository {
 
   async findTokenByUserId(userId: number): Promise<Token> {
     const token = await this.tokenRepository.findOneBy({ userId });
-    return TokenMappers.toDomain(token);
+    if (token) {
+      return TokenMappers.toDomain(token);
+    }
   }
 
   async saveRefreshToken(dto: Token): Promise<Token> {

@@ -48,4 +48,17 @@ export class UserRepositoryImpl implements IUserRepository {
     user.isActivated = true;
     return user;
   }
+
+  async getUserByActivationLink(link: string): Promise<User> {
+    const user = await this.userRepository.findOneBy({ activationLink: link });
+    if (user) {
+      return UserMappers.toDomain(user);
+    }
+  }
+
+  async updateUser(user: User): Promise<User> {
+    const entity = UserMappers.toEntity(user);
+    await this.userRepository.update({ id: user.id }, entity);
+    return user;
+  }
 }

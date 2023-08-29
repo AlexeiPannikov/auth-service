@@ -17,7 +17,7 @@ export class TokenService implements ITokenService {
       expiresIn: '30m',
     });
     const refreshToken = jwt.sign(payload, process.env.JWT_REFRESH_SECRET, {
-      expiresIn: '30m',
+      expiresIn: '24h',
     });
     return {
       accessToken,
@@ -26,11 +26,11 @@ export class TokenService implements ITokenService {
   }
 
   async saveRefreshToken(dto: SaveRefreshTokenDto) {
-    // const tokenData = await this.tokenRepository.findTokenByUserId(dto.userId)
-    // if (tokenData) {
-    //     tokenData.refreshToken = dto.refreshToken
-    //     return await this.tokenRepository.updateRefreshToken(tokenData)
-    // }
+    const tokenData = await this.tokenRepository.findTokenByUserId(dto.userId)
+    if (tokenData) {
+        tokenData.refreshToken = dto.refreshToken
+        return await this.tokenRepository.updateRefreshToken(tokenData)
+    }
     return await this.tokenRepository.saveRefreshToken(
       new Token({
         userId: dto.userId,

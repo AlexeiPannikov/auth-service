@@ -12,6 +12,7 @@ export class UserMappers {
       id: entity.id,
       name: entity.name,
       email: entity.email,
+      password: entity.password,
       isActivated: entity.isActivated,
       activationLink: entity.activationLink,
     });
