@@ -38,4 +38,8 @@ export class TokenRepositoryImpl implements ITokenRepository {
         await this.tokenRepository.delete({refreshToken})
         return true
     }
+
+    findTokenByRefreshToken(refreshToken: string): Promise<Token> {
+        return this.tokenRepository.findOneBy({refreshToken})
+    }
 }

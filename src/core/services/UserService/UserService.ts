@@ -8,6 +8,7 @@ import {IActivationService} from '../ActivationServices/interfaces/IActivationSe
 import {SignUpDto} from "./dto/SignUp.dto";
 import {SignInDto} from './dto/SignIn.dto';
 import * as process from "process";
+import {User} from "../../entities/User/User";
 
 @Injectable()
 export class UserService implements IUserService {
@@ -36,7 +37,7 @@ export class UserService implements IUserService {
                 HttpStatus.BAD_REQUEST
             )
         }
-        const tokens = this.tokenService.generateTokens({id: user.id});
+        const tokens = this.tokenService.generateTokens({userId: user.id});
         await this.tokenService.saveRefreshToken({
             userId: user.id,
             refreshToken: tokens.refreshToken,
@@ -67,7 +68,7 @@ export class UserService implements IUserService {
             to: email,
             link: `${process.env.API_URL}/auth/activate/${activationLink}`,
         });
-        const tokens = this.tokenService.generateTokens({id: user.id});
+        const tokens = this.tokenService.generateTokens({userId: user.id});
         await this.tokenService.saveRefreshToken({
             userId: user.id,
             refreshToken: tokens.refreshToken,
@@ -91,5 +92,9 @@ export class UserService implements IUserService {
 
     async logOut(refreshToken: string): Promise<void> {
         await this.tokenService.removeToken(refreshToken)
+    }
+
+    getAllUsers(): Promise<User[]> {
+        return this.userRepository.getUsers()
     }
 }

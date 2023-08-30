@@ -16,6 +16,8 @@ export interface IUserService {
     }>
 
     logOut(refreshToken: string): Promise<void>
+
+    getAllUsers(): Promise<User[]>
 }
 
 export const IUserService = Symbol('IUserService');
