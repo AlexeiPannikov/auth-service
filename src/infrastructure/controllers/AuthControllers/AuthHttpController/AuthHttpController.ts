@@ -136,7 +136,7 @@ export class AuthHttpController {
     }
 
     @UsePipes(new ValidationPipe())
-    @Get('check-token')
+    @Get('check-access-token')
     checkToken(
         @Req() request: Request
     ) {
