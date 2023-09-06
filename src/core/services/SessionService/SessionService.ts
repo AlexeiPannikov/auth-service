@@ -14,16 +14,18 @@ export class SessionService implements ISessionService {
     }
 
     runOldSessionsCleaner() {
-        // const job = new CronJob(
-        //     '* * * * * *',
-        //     function() {
-        //         console.log('You will see this message every second');
-        //     },
-        //     null,
-        //     true,
-        //     'America/Los_Angeles'
-        // );
-        // job.start()
+        const job = new CronJob(
+            '0 15 * * *',
+            function() {
+                console.log('Sessions cleaner has been ran');
+            },
+            null,
+            true,
+            null,
+            null,
+            true
+        );
+        job.start()
     }
 
     async create(dto: CreateSessionDto): Promise<Session> {

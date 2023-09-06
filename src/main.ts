@@ -10,11 +10,11 @@ async function start() {
   app.use(cookieParser());
   const configService = app.get(ConfigService);
   const sessionService = app.get(ISessionService)
-  sessionService.runOldSessionsCleaner()
   const port = configService.get<number>('PORT');
   await app.listen(port, () => {
     console.log(`Server started on port ${port}`);
   });
+  sessionService.runOldSessionsCleaner()
 }
 
 start();
