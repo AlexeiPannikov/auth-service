@@ -1,7 +1,9 @@
 import {
     Body,
     Controller,
-    Get, HttpException, HttpStatus,
+    Get,
+    HttpException,
+    HttpStatus,
     Inject,
     Param,
     Post, Req,
@@ -17,7 +19,9 @@ import * as process from 'process';
 import {ITokenService} from "../../../../core/services/TokenService/interface/ITokenService";
 import {SignUpRequestDto} from "./requests/SignUpRequest.dto";
 import {SignInRequestDto} from "./requests/SignInRequest.dto";
-import {UserResponse} from "./responses/UserResponse";
+import {UserResponse} from "../../UserControllers/UserHttpController/responses/UserResponse";
+import {IAuthService} from "../../../../core/services/AuthService/interface/IAuthService";
+import {ISessionService} from "../../../../core/services/SessionService/interface/ISessionService";
 
 @Controller('auth')
 @UseInterceptors(ResponseInterceptor)
@@ -27,6 +31,10 @@ export class AuthHttpController {
         private readonly userService: IUserService,
         @Inject(ITokenService)
         private readonly tokenService: ITokenService,
+        @Inject(IAuthService)
+        private readonly authService: IAuthService,
+        @Inject(ISessionService)
+        private readonly sessionService: ISessionService,
     ) {
     }
 
@@ -34,14 +42,9 @@ export class AuthHttpController {
     @Post('sign-up')
     async signUp(
         @Body() body: SignUpRequestDto,
-        @Res({passthrough: true}) response: Response,
     ) {
         try {
-            const data = await this.userService.signUp(body);
-            response.cookie('refreshToken', data.tokens.refreshToken, {
-                maxAge: 30 * 24 * 60 * 60 * 1000,
-                httpOnly: true,
-            });
+            const data = await this.authService.signUp(body);
             delete data.user.password
             return data;
         } catch (e) {
@@ -52,7 +55,10 @@ export class AuthHttpController {
 
     @UsePipes(new ValidationPipe())
     @Get('activate/:link')
-    async activate(@Param('link') link: string, @Res() response: Response) {
+    async activate(
+        @Param('link') link: string,
+        @Res() response: Response
+    ) {
         try {
             await this.userService.activate(link);
             return response.redirect(process.env.CLIENT_URL);
@@ -69,7 +75,7 @@ export class AuthHttpController {
         @Res({passthrough: true}) response: Response,
     ) {
         try {
-            const data = await this.userService.signIn(body);
+            const data = await this.authService.signIn(body);
             response.cookie('refreshToken', data.tokens.refreshToken, {
                 maxAge: 30 * 24 * 60 * 60 * 1000,
                 httpOnly: true,
@@ -87,11 +93,12 @@ export class AuthHttpController {
     @Get('log-out')
     async logOut(
         @Req() request: Request,
+        @Res() response: Response,
     ) {
         try {
             const {refreshToken} = request.cookies
-            await this.userService.logOut(refreshToken);
-            request.cookies.clearCookie("refreshToken")
+            await this.authService.logOut(refreshToken);
+            response.clearCookie("refreshToken")
         } catch (e) {
             console.log(e);
             return e;
@@ -106,7 +113,7 @@ export class AuthHttpController {
     ) {
         try {
             const {refreshToken} = request.cookies
-            const data = await this.tokenService.refreshToken(refreshToken);
+            const data = await this.authService.refreshToken(refreshToken);
             response.cookie('refreshToken', data.tokens.refreshToken, {
                 maxAge: 30 * 24 * 60 * 60 * 1000,
                 httpOnly: true,
@@ -122,22 +129,8 @@ export class AuthHttpController {
     }
 
     @UsePipes(new ValidationPipe())
-    @Get('get-all-users')
-    async getAllUsers() {
-        try {
-            const users = await this.userService.getAllUsers();
-            return {
-                users: users.map(user => new UserResponse(user))
-            }
-        } catch (e) {
-            console.log(e);
-            return e;
-        }
-    }
-
-    @UsePipes(new ValidationPipe())
     @Get('check-access-token')
-    checkToken(
+    async checkToken(
         @Req() request: Request
     ) {
         try {
@@ -149,14 +142,20 @@ export class AuthHttpController {
             if (!accessToken) {
                 return new HttpException("Unauthorized", HttpStatus.UNAUTHORIZED)
             }
-            const userData = this.tokenService.validateAccessToken(accessToken);
-            if (userData) {
-                return {
-                    isValid: true,
+            const payload = this.tokenService.validateAccessToken(accessToken);
+            if (!payload || !("sessionUuid" in payload) || !("userId" in payload)) {
+                return  {
+                    isValid: false,
+                }
+            }
+            const session = await this.sessionService.getSessionByUuid(payload.sessionUuid)
+            if (!session) {
+                return  {
+                    isValid: false,
                 }
             }
             return {
-                isValid: false,
+                isValid: true,
             }
         } catch (e) {
             console.log(e);

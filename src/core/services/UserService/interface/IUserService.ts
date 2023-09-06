@@ -1,21 +1,13 @@
 import {User} from '../../../entities/User/User';
-import {SignUpDto} from "../dto/SignUp.dto";
-import {SignInDto} from "../dto/SignIn.dto";
+import {SignUpDto} from "../../AuthService/dto/SignUp.dto";
+import {SignInDto} from "../../AuthService/dto/SignIn.dto";
 
 export interface IUserService {
-    signUp(dto: SignUpDto): Promise<{
-        user: User;
-        tokens: { accessToken: string; refreshToken: string };
-    }>;
+    createUser(dto: SignUpDto): Promise<User>;
+
+    getUserByEmail(email: string): Promise<User>
 
     activate(activationLink: string): Promise<User>;
-
-    signIn(dto: SignInDto): Promise<{
-        user: User;
-        tokens: { accessToken: string; refreshToken: string };
-    }>
-
-    logOut(refreshToken: string): Promise<void>
 
     getAllUsers(): Promise<User[]>
 }

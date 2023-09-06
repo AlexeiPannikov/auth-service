@@ -3,12 +3,10 @@ import {HttpException, HttpStatus, Inject, Injectable} from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import {v4} from 'uuid';
 import {IUserService} from './interface/IUserService';
-import {ITokenService} from '../TokenService/interface/ITokenService';
 import {IActivationService} from '../ActivationServices/interfaces/IActivationService';
-import {SignUpDto} from "./dto/SignUp.dto";
-import {SignInDto} from './dto/SignIn.dto';
-import * as process from "process";
+import {SignUpDto} from "../AuthService/dto/SignUp.dto";
 import {User} from "../../entities/User/User";
+import * as process from "process";
 
 @Injectable()
 export class UserService implements IUserService {
@@ -17,38 +15,10 @@ export class UserService implements IUserService {
         private readonly userRepository: IUserRepository,
         @Inject(IActivationService)
         private readonly activationService: IActivationService,
-        @Inject(ITokenService)
-        private readonly tokenService: ITokenService,
     ) {
     }
 
-    async signIn(dto: SignInDto) {
-        const user = await this.userRepository.getUserByEmail(dto.email)
-        if (!user) {
-            throw new HttpException(
-                `User wit this email is not exist`,
-                HttpStatus.BAD_REQUEST
-            )
-        }
-        const isEqualPass = bcrypt.compare(dto.password, user.password)
-        if (!isEqualPass) {
-            throw new HttpException(
-                `Wrong password`,
-                HttpStatus.BAD_REQUEST
-            )
-        }
-        const tokens = this.tokenService.generateTokens({userId: user.id});
-        await this.tokenService.saveRefreshToken({
-            userId: user.id,
-            refreshToken: tokens.refreshToken,
-        });
-        return {
-            user,
-            tokens,
-        };
-    }
-
-    async signUp(dto: SignUpDto) {
+    async createUser(dto: SignUpDto) {
         const {password, email} = dto;
         const candidate = await this.userRepository.getUserByEmail(email);
         if (candidate) {
@@ -57,7 +27,8 @@ export class UserService implements IUserService {
                 HttpStatus.BAD_REQUEST,
             );
         }
-        const hashPassword = await bcrypt.hash(password, 3);
+        const salt = await bcrypt.genSalt(3)
+        const hashPassword = await bcrypt.hash(password, salt);
         const activationLink = v4();
         const user = await this.userRepository.createUser({
             ...dto,
@@ -68,15 +39,7 @@ export class UserService implements IUserService {
             to: email,
             link: `${process.env.API_URL}/auth/activate/${activationLink}`,
         });
-        const tokens = this.tokenService.generateTokens({userId: user.id});
-        await this.tokenService.saveRefreshToken({
-            userId: user.id,
-            refreshToken: tokens.refreshToken,
-        });
-        return {
-            user,
-            tokens,
-        };
+        return user
     }
 
     async activate(activationLink: string) {
@@ -90,11 +53,18 @@ export class UserService implements IUserService {
         return await this.userRepository.updateUser(user);
     }
 
-    async logOut(refreshToken: string): Promise<void> {
-        await this.tokenService.removeToken(refreshToken)
-    }
-
     getAllUsers(): Promise<User[]> {
         return this.userRepository.getUsers()
+    }
+
+    async getUserByEmail(email: string): Promise<User> {
+        const user = await this.userRepository.getUserByEmail(email)
+        if (!user) {
+            throw new HttpException(
+                `User with this email is not exist`,
+                HttpStatus.BAD_REQUEST
+            )
+        }
+        return user
     }
 }

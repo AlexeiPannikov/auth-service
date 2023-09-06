@@ -1,5 +1,5 @@
-import { IsEmail, IsNotEmpty, IsString } from 'class-validator';
-import {SignUpDto} from "../../../../../core/services/UserService/dto/SignUp.dto";
+import {IsEmail, IsNotEmpty, IsString, IsStrongPassword, MinLength} from 'class-validator';
+import {SignUpDto} from "../../../../../core/services/AuthService/dto/SignUp.dto";
 
 export class SignUpRequestDto implements SignUpDto {
   @IsNotEmpty()
@@ -8,7 +8,7 @@ export class SignUpRequestDto implements SignUpDto {
 
   @IsNotEmpty()
   @IsString()
-  // @IsStrongPassword({minLength: 5, minNumbers: 1, minUppercase: 1, minLowercase: 1, minSymbols: 1})
+  @MinLength(5)
   password: string;
 
   @IsNotEmpty()

@@ -1,3 +1,4 @@
 export interface GenerateTokensPayloadDto {
-    userId: number
+    userId: number,
+    sessionUuid: string,
 }
